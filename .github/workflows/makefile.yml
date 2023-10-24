@@ -17,8 +17,8 @@ jobs:
     - name: Build Static
       run: make ociv
     - name: upload binary
-        uses: actions/upload-artifact@v3
-        with:
-          name: just ociv
-          path: ociv
+      uses: actions/upload-artifact@v3
+      with:
+        name: just ociv
+        path: ociv
 
