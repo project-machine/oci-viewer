@@ -1,7 +1,6 @@
-# ociv
-Interactive TUI OCI layout inspector.
+# ociv - Interactive TUI OCI layout inspector
 
-Run it with the name of a directory that has OCI layouts somewhere under it. It will search the entire tree.
+Run it with the name of a directory that has OCI layouts somewhere under it. It will display all layouts and images in the entire tree.
 
 ```
 ociv .
