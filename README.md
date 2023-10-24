@@ -7,6 +7,7 @@ Run it with the name of a directory that has OCI layouts somewhere under it. It 
 ociv .
 ```
 
+![image](https://github.com/project-machine/oci-viewer/assets/1768106/c224f256-fda7-4983-89f2-3b3994d6f3f1)
 
 
 
@@ -37,13 +38,15 @@ The included python script `get-published-layers.py` can be used to generate
 this file from a registry, or update an existing file when new sets of images
 are published.
 
-## summary of base images used in all images in a directory 
+## Summary of base images used in all images in a directory 
 
 If you select a directory or a layout, the display shows summary info about all the images in there:
 
+![image](https://github.com/project-machine/oci-viewer/assets/1768106/36a484af-d8bb-4aad-8b1b-0bfb62f27f1a)
 
 
 ## Shows OCI Artifacts, Referrers and Notary Signatures
 
+![image](https://github.com/project-machine/oci-viewer/assets/1768106/8b374ce1-e1ec-4179-9497-a064cb373711)
 
 
