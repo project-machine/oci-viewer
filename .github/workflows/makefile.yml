@@ -19,6 +19,6 @@ jobs:
     - name: upload binary
       uses: actions/upload-artifact@v3
       with:
-        name: just ociv
+        name: ociv
         path: ociv
 
