@@ -6,8 +6,7 @@ Run it with the name of a directory that has OCI layouts somewhere under it. It 
 ociv .
 ```
 
-![image](https://github.com/project-machine/oci-viewer/assets/1768106/c224f256-fda7-4983-89f2-3b3994d6f3f1)
-
+![image](https://github.com/project-machine/oci-viewer/assets/1768106/c9ffd36c-1f4b-4acf-824f-38ae856f9e6b)
 
 
 use the `j,k,n,p` keys or the mouse to move through the tree in the left pane.
@@ -39,9 +38,10 @@ are published.
 
 ## Summary of base images used in all images in a directory 
 
-If you select a directory or a layout, the display shows summary info about all the images in there:
+If you select a directory or a layout, the display shows summary info about all the images in there, and what base images are or are not in common between them.
 
-![image](https://github.com/project-machine/oci-viewer/assets/1768106/36a484af-d8bb-4aad-8b1b-0bfb62f27f1a)
+
+TODO: public screenshot needed
 
 
 ## Shows OCI Artifacts, Referrers and Notary Signatures
