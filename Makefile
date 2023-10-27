@@ -11,4 +11,5 @@ test-image:
 
 .PHONY: clean
 clean:
+	stacker clean
 	rm -rf ociv
