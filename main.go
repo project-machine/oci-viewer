@@ -165,32 +165,86 @@ func (a byCount) Less(i, j int) bool {
 	return a[i].count < a[j].count
 }
 
-// TODO this should look through known names  (probably?)
-func getFirstNamedBaseLayerDigest(digests []string, pathAndTagForDebug string) string {
-	if len(digests) == 0 {
-		log.Printf("no digests given to getFirstNamedBaseLayerDigest for %s", pathAndTagForDebug)
-		return "none, unexpectedly"
+func getNamesOfSelfOrUniqueDescendantLayer(digest string, allLayers map[string][]string) []string {
+	return getNamesOfSelfOrUniqueDescendantLayerWithLogIndent(digest, allLayers, 0)
+}
+func getNamesOfSelfOrUniqueDescendantLayerWithLogIndent(digest string, allLayers map[string][]string, logindent int) []string {
+
+	ilog := func(fmtstr string, indent int, args ...interface{}) {}
+	/*
+		    debugilog := func(fmtstr string, indent int, args ...interface{}) {
+				indentstr := ""
+				for i := 0; i < indent; i++ {
+					indentstr += "  "
+				}
+				fmtstr = fmt.Sprintf("%s%s", indentstr, fmtstr)
+				log.Printf(fmtstr, args...)
+			}
+	*/
+	ilog("getNamesOfSelf for %q", logindent, digest)
+
+	names := getNamesForHash(digest)
+	// if there are names for digest, return them
+	ilog("names is %v", logindent, names)
+
+	if len(names) > 1 {
+		ilog("just returning names %v", logindent, names)
+		return names
 	}
-	return digests[0]
+	if len(names) == 1 && names[0] != "?" {
+		ilog("returning names with an asterisk %v", logindent, names)
+		return []string{fmt.Sprintf("%v*", names[0])}
+	}
+
+	children := allLayers[digest]
+	ilog("children is %v", logindent, children)
+	// if there is only one child, recurse on it, get the first name we can
+	if len(children) == 1 {
+		return getNamesOfSelfOrUniqueDescendantLayerWithLogIndent(children[0], allLayers, logindent+1)
+	}
+
+	// if there are 0 or multiple children, just return digest, there is no unique descendant:
+
+	ilog(" returning just names %v", logindent, names)
+	return names
+
 }
 
 func (ti *treeInfo) summary() string {
-	s := fmt.Sprintf("%s: %d layouts, %d images\n\nbase image info:\n", ti.path, ti.numLayouts, len(ti.imageInfos))
+	s := fmt.Sprintf("%s: %d layouts, %d images\n\nbase image info:\n (base images marked with a * are not the first layer, just the first named layer)\n", ti.path, ti.numLayouts, len(ti.imageInfos))
 
 	allInternalKnownLayersStr := "\n\nAll known tags used internally in these images:\n"
 	allInternalKnownLayersSet := make(map[string][]string)
+	allLayers := make(map[string][]string)
 
 	baseLayerMap := map[string][]string{}
 
+	// builds:
+	// allInternalKnownLayersSet, a map of known layer names to lists of images that have those layers anywhere in their stack
+	// allLayers, an adjacency list of hashes representing the tree of all layers
+	// baseLayerMap, a map of image tags to the initial base layer in the image stack
 	for _, info := range ti.imageInfos {
 		pathAndTag := fmt.Sprintf("%s/%s", filepath.Base(info.ref.layoutpath), info.ref.tag)
 
-		baseLayer := getFirstNamedBaseLayerDigest(info.layerDigests, pathAndTag)
+		baseLayer := info.layerDigests[0]
 		baseLayerMap[baseLayer] = append(baseLayerMap[baseLayer], pathAndTag)
 		for idx, digest := range info.layerDigests {
 			if idx == len(info.layerDigests)-1 {
-				// ignore last layer, it is not "internal"
+				// ignore last layer for the internalknownlayersset, it is not "internal"
 				continue
+			} else {
+				nextLayer := info.layerDigests[idx+1]
+				currentChildren := allLayers[digest]
+				nextLayerAlreadyInChildren := false
+				for _, child := range currentChildren {
+					if nextLayer == child {
+						nextLayerAlreadyInChildren = true
+
+					}
+				}
+				if !nextLayerAlreadyInChildren {
+					allLayers[digest] = append(allLayers[digest], nextLayer)
+				}
 			}
 			for _, name := range getNamesForHash(digest) {
 				if name == "?" {
@@ -199,21 +253,26 @@ func (ti *treeInfo) summary() string {
 				allInternalKnownLayersSet[name] = append(allInternalKnownLayersSet[name], pathAndTag)
 			}
 		}
-
 	}
 
 	var uniqueInternalKnownLayers []string
 	for internalKnownLayer := range allInternalKnownLayersSet {
 		uniqueInternalKnownLayers = append(uniqueInternalKnownLayers, internalKnownLayer)
 	}
-	sort.Strings(uniqueInternalKnownLayers)
-	for _, layer := range uniqueInternalKnownLayers {
-		users := allInternalKnownLayersSet[layer]
-		allInternalKnownLayersStr += layer + " in " + strings.Join(users, ", ") + "\n\n"
+
+	if len(uniqueInternalKnownLayers) == 0 {
+		allInternalKnownLayersStr = "\nNo known layer tags detected in internal layers in images in this layout."
+	} else {
+		sort.Strings(uniqueInternalKnownLayers)
+
+		for _, layer := range uniqueInternalKnownLayers {
+			users := allInternalKnownLayersSet[layer]
+			allInternalKnownLayersStr += layer + " in " + strings.Join(users, ", ") + "\n\n"
+		}
 	}
 	buf := new(bytes.Buffer)
 	tw := tablewriter.NewWriter(buf)
-	tw.SetHeader([]string{"digest7", "names", "number of uses", "users"})
+	tw.SetHeader([]string{"digest7", "base layer names", "number of uses", "images using that base"})
 	tw.SetColWidth(100)
 	tw.SetBorder(false)
 	tw.SetColumnSeparator(" ")
@@ -233,10 +292,12 @@ func (ti *treeInfo) summary() string {
 			}
 		}
 
+		names := getNamesOfSelfOrUniqueDescendantLayer(baseHash, allLayers)
+
 		summaryItems = append(summaryItems,
 			summaryItem{
 				digest7: digest,
-				names:   getShortNamesForHash(baseHash),
+				names:   getShortStringForNames(names),
 				users:   usersString,
 				count:   len(users),
 			})

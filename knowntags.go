@@ -22,12 +22,11 @@ var LayerNameMap = map[string][]string{}
 // todo: be nice if this did a smart shortening, like replacing names with common prefixes and tags like
 // foo.com/{imageone,imagetwo}:commontag
 
-func getShortNamesForHash(digest string) []string {
+func getShortStringForNames(names []string) []string {
 	// map from tag-> names
 	namesWithCommonTags := map[string][]string{}
 	truncatedLayerNames := []string{}
 
-	names := getNamesForHash(digest)
 	if len(names) == 1 {
 		return names
 	}
