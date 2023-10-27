@@ -184,7 +184,7 @@ func getImageInfoString(ref imageref, info imageInfo) string {
 			uncompressedSizeAnnotation = fmt.Sprintf("%d", val)
 		}
 
-		var layerNames = getShortNamesForHash(digest)
+		var layerNames = getShortStringForNames(getNamesForHash(digest))
 
 		diffIDHash := "-"
 		if len(info.config.RootFS.DiffIDs) > idx {
