@@ -34,7 +34,11 @@ The format of that file is a list of `Name,Hash` string pairs like this:
 
 The included python script `get-published-layers.py` can be used to generate
 this file from a registry, or update an existing file when new sets of images
-are published.
+are published, for example:
+
+```
+./get-published-layers.py http://my.registry.tld/v2 myrepoprefix ./known-layers.json
+```
 
 ## Summary of base images used in all images in a directory 
 
