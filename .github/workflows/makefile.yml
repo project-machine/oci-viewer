@@ -8,12 +8,9 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
-
     - name: Build Static
       run: make ociv
     - name: upload binary
@@ -21,4 +18,9 @@ jobs:
       with:
         name: ociv
         path: ociv
-
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Lint Go Code
+      run: make lint

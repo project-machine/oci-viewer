@@ -162,7 +162,7 @@ func getImageInfoString(ref imageref, info imageInfo) string {
 	if info.err != nil {
 		errmsg := fmt.Sprintf("\nERROR reading image: %v\n", info.err)
 		hdr += fmt.Sprintf("\n[red:yellow]ERROR reading image: %v[white:-]\n", info.err)
-		log.Printf(errmsg)
+		log.Println(errmsg)
 	}
 
 	subjectHash, subjectName := info.getSubjectInfo()
@@ -181,7 +181,7 @@ func getImageInfoString(ref imageref, info imageInfo) string {
 
 		uncompressedSizeAnnotation := "missing"
 		if val, ok := layer.Annotations[UmociUncompressedSizeAnnotation]; ok {
-			uncompressedSizeAnnotation = fmt.Sprintf("%d", val)
+			uncompressedSizeAnnotation = val
 		}
 
 		var layerNames = getShortStringForNames(getNamesForHash(digest))
@@ -249,7 +249,7 @@ func getImageInfoString(ref imageref, info imageInfo) string {
 
 		switch info.configBlob.Descriptor.MediaType {
 		case "application/vnd.oci.image.manifest.v1+json":
-			configInfo = fmt.Sprintf("got a manifest configblob mediatype, expected?")
+			configInfo = "got a manifest configblob mediatype, expected?"
 
 		case "application/vnd.dev.cosign.artifact.sig.v1+json":
 			configInfo = "TODO: cosign artifact"
@@ -387,8 +387,8 @@ func loadImageManifest(oci casext.Engine, ref imageref, manifestDescriptor ispec
 			info.displayLabel = fmt.Sprintf("🔒 Notary Signature %s", ref.hash)
 			info.displayName = fmt.Sprintf("Notary Signature %s", ref.hash)
 		case "application/vnd.oci.image.index.v1+json":
-			info.displayLabel = fmt.Sprintf("🗂  Notary Signature Index")
-			info.displayName = fmt.Sprintf("Notary Signature Index")
+			info.displayLabel = "🗂  Notary Signature Index"
+			info.displayName = "Notary Signature Index"
 		default:
 			info.displayLabel = fmt.Sprintf("unknown mediatype. %s %s", configBlob.Descriptor.MediaType, ref.hash)
 			info.displayName = configBlob.Descriptor.MediaType
