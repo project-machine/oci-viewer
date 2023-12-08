@@ -40,7 +40,7 @@ func addContentsOfLayout(target *tview.TreeNode, path string) ([]imageInfo, []su
 	oci, err := umoci.OpenLayout(path)
 
 	if err != nil {
-		log.Printf("error opening layout at path '%s': %w", path, err)
+		log.Printf("error opening layout at path '%s': %s", path, err.Error())
 		return imageInfos, subIndexInfos
 	}
 	defer oci.Close()
@@ -94,7 +94,7 @@ func addContentsOfLayout(target *tview.TreeNode, path string) ([]imageInfo, []su
 			SetSelectable(true)
 		referrers, err := getReferrersForImage(oci, path, &imageInfo.manifestDescriptor)
 		if err != nil {
-			log.Printf("error getting referrers:%w\n", err)
+			log.Printf("error getting referrers: %s\n", err.Error())
 		}
 
 		for _, referrerDescriptor := range referrers.Manifests {
@@ -597,8 +597,6 @@ func doTViewStuff(ctxt *cli.Context) error {
 				infoPane.SetText("error")
 			}
 		}
-		return
-
 	}
 	tree.SetSelectedFunc(selfunc)
 	tree.SetChangedFunc(selfunc)

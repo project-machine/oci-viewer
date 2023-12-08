@@ -49,9 +49,7 @@ func getShortStringForNames(names []string) []string {
 }
 
 func getNamesForHash(digest string) []string {
-	layerNames := []string{}
-	var ok bool
-	layerNames, ok = LayerNameMap[digest]
+	layerNames, ok := LayerNameMap[digest]
 	if !ok {
 		layerNames = []string{"?"}
 	}
@@ -77,7 +75,7 @@ func setupWellKnownLayerNames() {
 
 	jsonBytes, err := os.ReadFile(fname)
 	if err != nil {
-		log.Printf("WARN: can't read %s: %w", fname, err)
+		log.Printf("WARN: can't read %s: %s", fname, err.Error())
 
 		return
 	}
