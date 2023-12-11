@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -12,8 +11,8 @@ import (
 
 // a hash->name pair to read in from the known layers json
 type LayerNameMapEntry struct {
-	Hash string
-	Name string
+	Hash string `json:"hash"`
+	Name string `json:"name"`
 }
 
 // global map of layer hashes to known names
@@ -68,21 +67,29 @@ func getUserOrSudoUserHomedir() string {
 	return u.HomeDir
 }
 
-func setupWellKnownLayerNames() {
-	entries := []LayerNameMapEntry{}
+func getKnowLayersFilename() string {
 	userHome := getUserOrSudoUserHomedir()
-	fname := filepath.Join(userHome, ".cache/ociv/known-layers.json")
+	return filepath.Join(userHome, ".cache/ociv/known-layers.json")
+}
 
-	jsonBytes, err := os.ReadFile(fname)
+func makeCacheDir() {
+	userHome := getUserOrSudoUserHomedir()
+	cacheDir := filepath.Join(userHome, ".cache/ociv")
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(cacheDir, 0755); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func setupWellKnownLayerNames() {
+	fname := getKnowLayersFilename()
+	entries, err := Load(fname)
+
 	if err != nil {
 		log.Printf("WARN: can't read %s: %s", fname, err.Error())
 
 		return
-	}
-
-	err = json.Unmarshal(jsonBytes, &entries)
-	if err != nil {
-		log.Fatal(err)
 	}
 
 	for _, e := range entries {
