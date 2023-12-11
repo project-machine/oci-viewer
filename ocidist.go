@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
-	"io/ioutil"
 	"path/filepath"
 	"strings"
 
@@ -24,7 +24,7 @@ func getBlob(layer *ispec.Descriptor, layoutpath string) ([]byte, error) {
 
 	blobPath := filepath.Join(layoutpath, "blobs", algo, digest)
 
-	blobBytes, err := ioutil.ReadFile(blobPath)
+	blobBytes, err := os.ReadFile(blobPath)
 	if err != nil {
 		return []byte{}, fmt.Errorf("Failed to read OCI layer blob @ %q: %s", blobPath, err)
 	}
