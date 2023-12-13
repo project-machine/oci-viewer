@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"text/tabwriter"
@@ -119,6 +120,40 @@ type subIndexInfo struct {
 func (sr subIndexRef) summary() string {
 	info := SubIndexInfoMap[sr.hash]
 	return fmt.Sprintf("sub-index with %d manifests", len(info.manifestDescriptors))
+}
+
+type layerRef struct {
+	blobfilepath  string
+	hash          string
+	displayString string
+}
+
+var LayerSummaryCache = map[string]string{}
+
+func (lr layerRef) summary(filter string) string {
+	layerfilterkey := lr.blobfilepath + "\\" + filter
+	cachedSummary, ok := LayerSummaryCache[layerfilterkey]
+	if ok {
+		return cachedSummary
+	}
+
+	filterArg := ""
+	if filter != "" {
+		filterArg = " | grep " + filter
+	}
+	cmdstr := "tar tzvf " + lr.blobfilepath + filterArg
+	cmd := exec.Command("sh", "-c", cmdstr)
+	var out strings.Builder
+	var stderr strings.Builder
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		log.Printf("error: %v", err)
+	}
+	summaryString := fmt.Sprintf("%q\n%q\n%s\n%s", lr.displayString, cmdstr, out.String(), stderr.String())
+	LayerSummaryCache[layerfilterkey] = summaryString
+	return summaryString
 }
 
 // ImageInfoMap - global map of manifest hashes to info

@@ -110,6 +110,25 @@ func addContentsOfLayout(target *tview.TreeNode, path string) ([]imageInfo, []su
 
 			node.AddChild(refNode)
 		}
+
+		layerTreeNode := tview.NewTreeNode("layers").
+			SetReference(imageInfo.ref).
+			SetSelectable(true)
+		node.AddChild(layerTreeNode)
+
+		for _, layerDigest := range imageInfo.layerDigests {
+			displayString := layerDigest
+			if len(LayerNameMap[layerDigest]) > 0 {
+				displayString = strings.Join(LayerNameMap[layerDigest], ",")
+			}
+			blobfilepath := filepath.Join(path, "blobs", "sha256", layerDigest)
+			newLayerRef := layerRef{hash: layerDigest, blobfilepath: blobfilepath, displayString: displayString}
+			layerNode := tview.NewTreeNode(displayString).
+				SetReference(newLayerRef).
+				SetSelectable(true)
+			layerTreeNode.AddChild(layerNode)
+		}
+
 		target.AddChild(node)
 		log.Printf("    done loading image %q", imageInfo.displayName)
 	}
@@ -382,6 +401,9 @@ func getMatchingTreeNodes(node *tview.TreeNode, needle string) []*tview.TreeNode
 		case imageref:
 			haystacks = reference.(imageref).searchString()
 
+		case layerRef:
+			haystacks = []string{ref.hash, ref.displayString}
+
 		case subIndexRef:
 			haystacks = []string{}
 			info := SubIndexInfoMap[ref.hash]
@@ -435,6 +457,8 @@ func clearTreeFormatting(node *tview.TreeNode, selectable bool) {
 				node.SetColor(tcell.ColorBlue)
 			case imageref:
 				node.SetColor(tcell.ColorRed)
+			case layerRef:
+				node.SetColor(tcell.ColorGreen)
 			case subIndexRef:
 				node.SetColor(tcell.ColorBlue)
 			default:
@@ -550,7 +574,32 @@ func doTViewStuff(ctxt *cli.Context) error {
 		SetText(strings.Join(summaries, "\n")).
 		SetDynamicColors(true).
 		SetRegions(true)
+
 	infoPane.Box.SetBorder(true)
+	currentFilter := ""
+	summaryFilterField := tview.NewInputField().
+		SetLabel("Filter Output: ").
+		SetChangedFunc(func(needle string) {
+
+			currentFilter = needle
+
+			reference := tree.GetCurrentNode().GetReference()
+			switch ref := reference.(type) {
+			case layerRef:
+				infoPane.SetText(ref.summary(currentFilter))
+			}
+
+			// update info pane with summaries
+		})
+	summaryFilterField.SetDoneFunc(func(key tcell.Key) {
+		app.SetFocus(infoPane)
+	})
+
+	summaryFilterField.Box.SetBorder(true)
+
+	infoPaneGrid := tview.NewGrid().SetRows(0, 3).SetColumns(0).
+		AddItem(infoPane, 0, 0, 1, 1, 0, 0, true).
+		AddItem(summaryFilterField, 1, 0, 1, 1, 0, 0, false)
 
 	statusLine := tview.NewTextView().
 		SetTextAlign(tview.AlignCenter).
@@ -571,6 +620,8 @@ func doTViewStuff(ctxt *cli.Context) error {
 				infoPane.ScrollToBeginning()
 			case treeInfo:
 				infoPane.SetText(tview.Escape(ref.summary()))
+			case layerRef:
+				infoPane.SetText(ref.summary(currentFilter))
 			case subIndexRef:
 				infoPane.SetText(ref.summary())
 			default:
@@ -583,6 +634,10 @@ func doTViewStuff(ctxt *cli.Context) error {
 				infoPane.ScrollToBeginning()
 			case treeInfo:
 				infoPane.SetText(ref.summary())
+				infoPane.ScrollToBeginning()
+			case layerRef:
+				// todo mmcc didn't think through this behavior:
+				infoPane.SetText(ref.summary(currentFilter))
 				infoPane.ScrollToBeginning()
 			case subIndexRef:
 				infoPane.SetText(ref.summary())
@@ -634,10 +689,10 @@ func doTViewStuff(ctxt *cli.Context) error {
 		SetRows(0, 1).
 		SetColumns(-1, -3).
 		AddItem(treeGrid, 0, 0, 1, 1, 0, 0, true).
-		AddItem(infoPane, 0, 1, 1, 1, 0, 0, false).
+		AddItem(infoPaneGrid, 0, 1, 1, 1, 0, 0, false).
 		AddItem(statusLine, 1, 0, 1, 2, 0, 0, false)
 
-	tabbableViews := []tview.Primitive{tree, searchInputField, infoPane}
+	tabbableViews := []tview.Primitive{tree, searchInputField, infoPane, summaryFilterField}
 	tabbableViewIdx := 0
 
 	setNewFocusedViewIdx := func(prevIdx int, newIdx int) {
