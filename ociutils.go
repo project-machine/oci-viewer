@@ -121,6 +121,18 @@ func (sr subIndexRef) summary() string {
 	return fmt.Sprintf("sub-index with %d manifests", len(info.manifestDescriptors))
 }
 
+type layerRef struct {
+	blobfilepath  string
+	hash          string
+	displayString string
+}
+
+func (lr layerRef) summary() string {
+	// not sure if we need a separate "info" struct here.
+	// those are only for stuff that can't be put into a map.
+	return fmt.Sprintf("TODO, path is %q and display string is %q", lr.blobfilepath, lr.displayString)
+}
+
 // ImageInfoMap - global map of manifest hashes to info
 var ImageInfoMap = map[string]imageInfo{}
 

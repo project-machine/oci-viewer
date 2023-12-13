@@ -110,6 +110,25 @@ func addContentsOfLayout(target *tview.TreeNode, path string) ([]imageInfo, []su
 
 			node.AddChild(refNode)
 		}
+
+		layerTreeNode := tview.NewTreeNode("layers").
+			SetReference(imageInfo.ref).
+			SetSelectable(true)
+		node.AddChild(layerTreeNode)
+
+		for _, layerDigest := range imageInfo.layerDigests {
+			displayString := layerDigest
+			if len(LayerNameMap[layerDigest]) > 0 {
+				displayString = strings.Join(LayerNameMap[layerDigest], ",")
+			}
+			blobfilepath := filepath.Join(path, "blobs", "sha256", layerDigest)
+			newLayerRef := layerRef{hash: layerDigest, blobfilepath: blobfilepath, displayString: displayString}
+			layerNode := tview.NewTreeNode(displayString).
+				SetReference(newLayerRef).
+				SetSelectable(true)
+			layerTreeNode.AddChild(layerNode)
+		}
+
 		target.AddChild(node)
 		log.Printf("    done loading image %q", imageInfo.displayName)
 	}
@@ -382,6 +401,9 @@ func getMatchingTreeNodes(node *tview.TreeNode, needle string) []*tview.TreeNode
 		case imageref:
 			haystacks = reference.(imageref).searchString()
 
+		case layerRef:
+			haystacks = []string{ref.hash, ref.displayString}
+
 		case subIndexRef:
 			haystacks = []string{}
 			info := SubIndexInfoMap[ref.hash]
@@ -435,6 +457,8 @@ func clearTreeFormatting(node *tview.TreeNode, selectable bool) {
 				node.SetColor(tcell.ColorBlue)
 			case imageref:
 				node.SetColor(tcell.ColorRed)
+			case layerRef:
+				node.SetColor(tcell.ColorGreen)
 			case subIndexRef:
 				node.SetColor(tcell.ColorBlue)
 			default:
@@ -571,6 +595,8 @@ func doTViewStuff(ctxt *cli.Context) error {
 				infoPane.ScrollToBeginning()
 			case treeInfo:
 				infoPane.SetText(tview.Escape(ref.summary()))
+			case layerRef:
+				infoPane.SetText(ref.summary())
 			case subIndexRef:
 				infoPane.SetText(ref.summary())
 			default:
@@ -582,6 +608,10 @@ func doTViewStuff(ctxt *cli.Context) error {
 				infoPane.SetText(ref.summary())
 				infoPane.ScrollToBeginning()
 			case treeInfo:
+				infoPane.SetText(ref.summary())
+				infoPane.ScrollToBeginning()
+			case layerRef:
+				// todo mmcc didn't think through this behavior:
 				infoPane.SetText(ref.summary())
 				infoPane.ScrollToBeginning()
 			case subIndexRef:
