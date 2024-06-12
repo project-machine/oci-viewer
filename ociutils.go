@@ -126,6 +126,7 @@ type layerRef struct {
 	blobfilepath  string
 	hash          string
 	displayString string
+	mediaType     string
 }
 
 var LayerSummaryCache = map[string]string{}
@@ -141,7 +142,12 @@ func (lr layerRef) summary(filter string) string {
 	if filter != "" {
 		filterArg = " | grep " + filter
 	}
+
 	cmdstr := "tar tzvf " + lr.blobfilepath + filterArg
+	if strings.Contains(lr.mediaType, "squashfs") {
+		cmdstr = "echo TODO: gunzip -c " + lr.blobfilepath + " |unsquashfs -llc "
+		//TODO: can't unsquash via pipe, need to gunzip to tempfile and delete
+	}
 	cmd := exec.Command("sh", "-c", cmdstr)
 	var out strings.Builder
 	var stderr strings.Builder

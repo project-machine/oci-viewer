@@ -116,13 +116,15 @@ func addContentsOfLayout(target *tview.TreeNode, path string) ([]imageInfo, []su
 			SetSelectable(true)
 		node.AddChild(layerTreeNode)
 
-		for _, layerDigest := range imageInfo.layerDigests {
+		for idx, layerDigest := range imageInfo.layerDigests {
 			displayString := layerDigest
 			if len(LayerNameMap[layerDigest]) > 0 {
 				displayString = strings.Join(LayerNameMap[layerDigest], ",")
 			}
 			blobfilepath := filepath.Join(path, "blobs", "sha256", layerDigest)
-			newLayerRef := layerRef{hash: layerDigest, blobfilepath: blobfilepath, displayString: displayString}
+			mt := imageInfo.manifest.Layers[idx].MediaType
+			newLayerRef := layerRef{hash: layerDigest, mediaType: mt,
+				blobfilepath: blobfilepath, displayString: displayString}
 			layerNode := tview.NewTreeNode(displayString).
 				SetReference(newLayerRef).
 				SetSelectable(true)
