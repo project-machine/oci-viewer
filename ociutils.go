@@ -138,17 +138,26 @@ func (lr layerRef) summary(filter string) string {
 		return cachedSummary
 	}
 
-	filterArg := ""
-	if filter != "" {
-		filterArg = " | grep " + filter
+	fileListFilename := fmt.Sprintf("/tmp/%s-filelist", lr.hash)
+	if _, err := os.Stat(fileListFilename); os.IsNotExist(err) {
+		cmdstr := "tar tzvf " + lr.blobfilepath
+		if strings.Contains(lr.mediaType, "squashfs") {
+			cmdstr = "unsquashfs -llc " + lr.blobfilepath
+		}
+		cmd := exec.Command("sh", "-c", cmdstr+" > "+fileListFilename)
+		err := cmd.Run()
+		if err != nil {
+			log.Printf("error: %v", err)
+			return fmt.Sprintf(" error: %v", err)
+		}
 	}
 
-	cmdstr := "tar tzvf " + lr.blobfilepath + filterArg
-	if strings.Contains(lr.mediaType, "squashfs") {
-		cmdstr = "echo TODO: gunzip -c " + lr.blobfilepath + " |unsquashfs -llc "
-		//TODO: can't unsquash via pipe, need to gunzip to tempfile and delete
+	filterArg := "cat "
+	if filter != "" {
+		filterArg = " grep " + filter
 	}
-	cmd := exec.Command("sh", "-c", cmdstr)
+	cmd := exec.Command("sh", "-c", filterArg+" "+fileListFilename)
+
 	var out strings.Builder
 	var stderr strings.Builder
 	cmd.Stdout = &out
@@ -157,7 +166,8 @@ func (lr layerRef) summary(filter string) string {
 	if err != nil {
 		log.Printf("error: %v", err)
 	}
-	summaryString := fmt.Sprintf("%q\n%q\n%s\n%s", lr.displayString, cmdstr, out.String(), stderr.String())
+
+	summaryString := fmt.Sprintf("file listing of blob %q (%s)\n\n%s\n%s", lr.displayString, lr.mediaType, out.String(), stderr.String())
 	LayerSummaryCache[layerfilterkey] = summaryString
 	return summaryString
 }
