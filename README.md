@@ -17,6 +17,15 @@ on the tree and select other matches.
 
 Control-Q exits.
 
+## layer contents display
+
+ociv since 1.7.1 will show a subtree of the layers in each image, and selecting a layer will show the actual contents of the layer blob on the summary pane.
+
+Note this is currently just the straight file listing of the archives, with whiteouts included. No attempt is made to compare to other layers and/or show information about what might be hidden by whiteouts, etc.
+
+<img width="1694" alt="image" src="https://github.com/user-attachments/assets/d2b62c89-90f8-4197-af65-8ab37cae5f3c" />
+
+
 ## known layer name display
 
 ociv will look for a file called `known-layers.json` in `$HOME/.cache/ociv/`
