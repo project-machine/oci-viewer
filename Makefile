@@ -7,7 +7,8 @@ GOLINTER_VERSION := v1.54.2
 GOLINTER := $(TOOLSDIR)/bin/golangci-lint
 
 
-ociv: *.go lint
+ociv: *.go
+	go env
 	CGO_ENABLED=0 go build ${LDFLAGS} ${GOTAGS} -o ociv  ./...
 
 $(GOLINTER):
