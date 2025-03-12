@@ -28,6 +28,9 @@ Note this is currently just the straight file listing of the archives, with whit
 
 ## known layer name display
 
+Sometimes instead of hashes, it's more useful to see an image layer's name, as tagged in a repository you care about.
+OCIV can display names instead of hashes if given a mapping for them.
+
 ociv will look for a file called `known-layers.json` in `$HOME/.cache/ociv/`
 (or `~$SUDO_USER/.cache/ociv/` if running as root, e.g. to look at an OCI layout
 in a mounted squashfs filesystem) to annotate any displayed layer hashes with
@@ -42,12 +45,11 @@ The format of that file is a list of `Name,Hash` string pairs like this:
 ]
 ```
 
-The included python script `get-published-layers.py` can be used to generate
-this file from a registry, or update an existing file when new sets of images
-are published, for example:
+To generate this file from a registry, or update an existing file when new sets of images
+are published, use the flags `--registry` and `--prefixes` to a run of ociv.
 
 ```bash
-./get-published-layers.py http://my.registry.tld/v2 myrepoprefix ./known-layers.json
+ociv --registry http://my.registry.tld/v2 --prefixes myrepoprefix .
 ```
 
 ## Summary of base images used in all images in a directory
